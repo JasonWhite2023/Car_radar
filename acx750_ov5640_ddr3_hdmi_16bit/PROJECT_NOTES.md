@@ -510,3 +510,69 @@ git checkout c992e09 -- "ov5640_ddr3_hdmi_vga.srcs/sources_1/camera_init/ov5640_
 - 若图像只是左右反、上下正常 → 传感器单轴镜像必然改 Bayer，左右只能在**显示端**翻；
 - 若图像其实也上下反（180°）→ 可试指南的 **MIRROR&FLIP**（`0x3820=0x46`、`0x3821=0x07`），180° 旋转保持 Bayer；
 - 已回退 `0x3821=0x01`。
+
+---
+
+## 12. 同步到 GitHub（Car_radar）与中文提交约定
+
+### 12.1 两个副本
+
+| 位置 | 用途 | Git |
+|---|---|---|
+| `D:\Xilinx\FPGAProject\acx750_ov5640_ddr3_hdmi_16bit` | 原始工作目录（开发/编译） | 独立仓库，`master` |
+| `D:\Xilinx\FPGAProject\Car_radar\acx750_ov5640_ddr3_hdmi_16bit` | GitHub 发布快照 | Car_radar 仓库，`cong` 分支 |
+
+两份互不影响；**只在一个地方改**。推荐方案 A：原始目录开发，脚本同步到 Car_radar。
+
+### 12.2 工作流（方案 A）
+
+1. 在原始目录改代码、编译、**提交（中文提交信息）**；
+2. 运行同步脚本；
+3. 脚本把原始 HEAD 导出为快照，替换 Car_radar 里的副本，提交（中文）并推送 `cong`。
+
+脚本只同步**已提交的 HEAD**；原始项目有未提交修改时脚本拒绝执行。
+
+### 12.3 同步脚本
+
+- 路径：`D:\Xilinx\FPGAProject\Car_radar\sync_acx750.ps1`
+- 用法：
+
+```powershell
+pwsh -File D:\Xilinx\FPGAProject\Car_radar\sync_acx750.ps1
+```
+
+- 参数：`-ProjectPath`、`-RepoPath`、`-Branch`、`-Message`
+- 行为：检查原始项目干净 → `git archive HEAD` → 替换副本 → `git add` → `git commit`（中文）→ `push origin cong`
+- 推送使用 Windows OpenSSH（`C:/WINDOWS/System32/OpenSSH/ssh.exe`），避免 Git 自带 ssh 的管道问题。
+
+### 12.4 手动等价命令
+
+```powershell
+cd D:\Xilinx\FPGAProject\acx750_ov5640_ddr3_hdmi_16bit
+git archive HEAD -o $env:TEMP\proj.tar
+
+cd D:\Xilinx\FPGAProject\Car_radar
+Remove-Item -Recurse -Force .\acx750_ov5640_ddr3_hdmi_16bit
+New-Item -ItemType Directory -Path .\acx750_ov5640_ddr3_hdmi_16bit | Out-Null
+tar -xf $env:TEMP\proj.tar -C .\acx750_ov5640_ddr3_hdmi_16bit
+
+git add -A
+git commit -m "同步 acx750_ov5640_ddr3_hdmi_16bit"
+git -c core.sshCommand="C:/WINDOWS/System32/OpenSSH/ssh.exe" push origin cong
+```
+
+### 12.5 提交信息约定
+
+- 原始项目和 Car_radar 的提交信息**一律用中文**；
+- 示例：
+  - `文档：补充 Car_radar 同步流程`
+  - `测试：AWB G 增益改为 0x0300`
+  - `同步 acx750_ov5640_ddr3_hdmi_16bit：7425629`（脚本默认格式）
+- 历史里已有的英文提交不重写。
+
+### 12.6 注意
+
+- 不要在两个副本里同时改；
+- 构建产物（`.runs`、`*.bit` 等）不会同步，Car_radar 只存源码/工程文件；
+- 推送失败时提交已在本地，可稍后手动 `git push`；
+- 第一次在 Car_radar 里打开 `.xpr` 会重新生成 IP/综合，比原始目录慢。
