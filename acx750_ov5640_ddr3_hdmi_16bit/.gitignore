@@ -1,0 +1,19 @@
+# Vivado generated / runtime
+.Xil/
+*.cache/
+*.hw/
+*.sim/
+*.runs/
+*.ip_user_files/
+*.jou
+*.log
+*.backup.*
+*.bit
+*.dcp
+*.ltx
+*.pb
+*.rpx
+*.str
+*.rpt
+.git_vendor_off/
+.svn/
