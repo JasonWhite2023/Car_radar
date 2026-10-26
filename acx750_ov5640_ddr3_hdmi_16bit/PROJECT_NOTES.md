@@ -535,11 +535,15 @@ git checkout c992e09 -- "ov5640_ddr3_hdmi_vga.srcs/sources_1/camera_init/ov5640_
 ### 12.3 同步脚本
 
 - 路径：`D:\Xilinx\FPGAProject\Car_radar\sync_acx750.ps1`
-- 用法：
+- 用法（本机验证通过）：
 
 ```powershell
-pwsh -File D:\Xilinx\FPGAProject\Car_radar\sync_acx750.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File D:\Xilinx\FPGAProject\Car_radar\sync_acx750.ps1
 ```
+
+- 如果装了 PowerShell 7，也可以把 `powershell` 换成 `pwsh`；
+- 脚本保存为 UTF-8 BOM，兼容 Windows PowerShell 5.1；
+- 若执行策略仍拦截，可用：`powershell -NoProfile -Command "& ([scriptblock]::Create((Get-Content -Raw 'D:\Xilinx\FPGAProject\Car_radar\sync_acx750.ps1')))"`。
 
 - 参数：`-ProjectPath`、`-RepoPath`、`-Branch`、`-Message`
 - 行为：检查原始项目干净 → `git archive HEAD` → 替换副本 → `git add` → `git commit`（中文）→ `push origin cong`
@@ -576,3 +580,10 @@ git -c core.sshCommand="C:/WINDOWS/System32/OpenSSH/ssh.exe" push origin cong
 - 构建产物（`.runs`、`*.bit` 等）不会同步，Car_radar 只存源码/工程文件；
 - 推送失败时提交已在本地，可稍后手动 `git push`；
 - 第一次在 Car_radar 里打开 `.xpr` 会重新生成 IP/综合，比原始目录慢。
+
+### 12.7 验证（2026-10-26）
+
+- 首次运行：原始 HEAD `c830e2a` → Car_radar 提交 `a35e19a`，推送 `75a2850..a35e19a cong -> cong`；
+- 重复运行（原始 HEAD 未变）：输出“快照没有变化，无需提交”，退出码 0；
+- 运行命令：`powershell -NoProfile -ExecutionPolicy Bypass -File ...`（Windows PowerShell 5.1）；
+- 脚本 `sync_acx750.ps1` 已随首次同步提交进 Car_radar。
